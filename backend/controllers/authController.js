@@ -33,8 +33,15 @@ exports.register = async (req, res) => {
       { expiresIn: '1d' }
     );
 
+    // ✅ Return user object along with token
     res.status(201).json({
       message: 'User registered successfully',
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      },
       token
     });
   } catch (err) {
@@ -68,8 +75,15 @@ exports.login = async (req, res) => {
       { expiresIn: '1d' }
     );
 
+    // ✅ Return user object along with token
     res.json({
       message: 'Login successful',
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      },
       token
     });
   } catch (err) {
