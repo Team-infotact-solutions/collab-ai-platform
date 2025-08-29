@@ -3,6 +3,9 @@ import { useAuth } from '../context/AuthContext';
 import Whiteboard from '../components/workspace/Whiteboard';
 import AIIntegration from '../components/workspace/AIIntegration';
 import TaskList from '../components/workspace/TaskList';
+import ChatUI from '../components/workspace/ChatUI';
+import VersionHistory from '../components/workspace/VersionHistory';
+
 
 function Workspace() {
   const { user } = useAuth();
@@ -24,6 +27,8 @@ function Workspace() {
       <Whiteboard />
       <AIIntegration />
       <TaskList />
+      <ChatUI />
+      <VersionHistory />
     </div>
   );
 }
