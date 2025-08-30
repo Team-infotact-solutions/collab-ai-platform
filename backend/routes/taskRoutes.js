@@ -1,4 +1,3 @@
-// backend/routes/taskRoutes.js
 const express = require('express');
 const router = express.Router();
 const {
@@ -11,12 +10,11 @@ const {
 } = require('../controllers/taskController');
 const auth = require('../middleware/auth');
 
-// All Task routes are protected
-router.post('/', auth(), createTask);            // Create a new task
-router.get('/', auth(), getTasks);              // Get all tasks
-router.get('/:id', auth(), getTaskById);        // Get task by ID
-router.put('/:id', auth(), updateTask);         // Update task
-router.delete('/:id', auth(), deleteTask);      // Delete single task
-router.delete('/', auth(), clearAllTasks);      // Delete all tasks (optional, admin or owner)
+router.post('/', auth(), createTask);
+router.get('/', auth(), getTasks);
+router.get('/:id', auth(), getTaskById);
+router.put('/:id', auth(), updateTask);
+router.delete('/:id', auth(), deleteTask);
+router.delete('/', auth(), clearAllTasks);
 
 module.exports = router;
