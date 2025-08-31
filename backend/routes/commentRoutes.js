@@ -1,53 +1,83 @@
 const express = require("express");
 const router = express.Router();
-const Comment = require("../models/commentModel");
+const Comment = require("../models/Comment");
 const auth = require("../middleware/auth");
 
-// 📜 Get all comments for a task
-router.get("/:taskId", auth(), async (req, res) => {
+// ================= GET COMMENTS FOR A TASK =================
+router.get("/task/:taskId", auth(), async (req, res) => {
   try {
-    const comments = await Comment.find({ taskId: req.params.taskId })
-      .populate("createdBy", "name email");
+    const { taskId } = req.params;
+
+    if (!taskId.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ message: "Invalid taskId" });
+    }
+
+    const comments = await Comment.find({ task: taskId })
+      .populate("user", "name email")
+      .sort({ createdAt: -1 });
+
     res.json(comments);
   } catch (err) {
-    console.error("❌ Error fetching comments:", err.message);
-    res.status(500).json({ message: "Failed to fetch comments" });
+    console.error("Fetch comments error:", err);
+    res.status(500).json({ message: "Server error while fetching comments" });
   }
 });
 
-// ➕ Add new comment
-router.post("/:taskId", auth(), async (req, res) => {
+// ================= CREATE COMMENT =================
+router.post("/task/:taskId", auth(), async (req, res) => {
   try {
+    const { taskId } = req.params;
     const { text } = req.body;
-    if (!text) {
+
+    if (!taskId.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ message: "Invalid taskId" });
+    }
+
+    if (!text || !text.trim()) {
       return res.status(400).json({ message: "Comment text is required" });
     }
 
-    const newComment = new Comment({
-      taskId: req.params.taskId,
-      text,
-      createdBy: req.user.id,
+    const comment = new Comment({
+      task: taskId,
+      text: text.trim(),
+      user: req.user.id,
     });
 
-    const saved = await newComment.save();
-    res.status(201).json(saved);
+    const savedComment = await comment.save();
+    await savedComment.populate("user", "name email");
+
+    res.status(201).json(savedComment);
   } catch (err) {
-    console.error("❌ Error creating comment:", err.message);
-    res.status(500).json({ message: "Failed to create comment" });
+    console.error("Create comment error:", err);
+    res.status(500).json({ message: "Server error while creating comment" });
   }
 });
 
-// ❌ Delete comment
-router.delete("/:id", auth(), async (req, res) => {
+// ================= DELETE COMMENT =================
+router.delete("/:commentId", auth(), async (req, res) => {
   try {
-    const deleted = await Comment.findByIdAndDelete(req.params.id);
-    if (!deleted) {
+    const { commentId } = req.params;
+
+    if (!commentId.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ message: "Invalid commentId" });
+    }
+
+    const comment = await Comment.findById(commentId);
+
+    if (!comment) {
       return res.status(404).json({ message: "Comment not found" });
     }
-    res.json({ message: "Comment deleted" });
+
+    // Only admin or comment owner can delete
+    if (req.user.role !== "admin" && comment.user.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Not authorized to delete this comment" });
+    }
+
+    await comment.remove();
+    res.json({ message: "Comment deleted successfully" });
   } catch (err) {
-    console.error("❌ Error deleting comment:", err.message);
-    res.status(500).json({ message: "Failed to delete comment" });
+    console.error("Delete comment error:", err);
+    res.status(500).json({ message: "Server error while deleting comment" });
   }
 });
 
