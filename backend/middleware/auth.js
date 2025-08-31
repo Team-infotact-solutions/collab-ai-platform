@@ -1,18 +1,24 @@
 const jwt = require('jsonwebtoken');
 
 /**
- * Middleware to protect routes and optionally restrict by roles.
- * @param {Array} roles - optional array of allowed roles, e.g., ['admin', 'user']
+ * Auth middleware to protect routes and optionally restrict by roles.
+ * @param {Array} roles - optional array of allowed roles, e.g., ['admin', 'member']
  */
 const auth = (roles = []) => {
   return (req, res, next) => {
     try {
-      // 1️⃣ Extract token from Authorization header
+      // 1️⃣ Get token (from Authorization header or cookie)
+      let token;
       const authHeader = req.header('Authorization');
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ message: 'Unauthorized: No token provided' });
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.split(' ')[1].trim();
+      } else if (req.cookies && req.cookies.token) {
+        token = req.cookies.token;
       }
-      const token = authHeader.split(' ')[1].trim();
+
+      if (!token) {
+        return res.status(401).json({ success: false, message: 'Unauthorized: Token missing' });
+      }
 
       // 2️⃣ Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -20,15 +26,20 @@ const auth = (roles = []) => {
       // 3️⃣ Attach user info to request
       req.user = { id: decoded.id, role: decoded.role };
 
-      // 4️⃣ Role-based access control (if roles are specified)
-      if (roles.length && !roles.includes(decoded.role)) {
-        return res.status(403).json({ message: 'Access denied: insufficient permissions' });
+      // 4️⃣ Check role if needed
+      if (roles.length > 0 && !roles.includes(decoded.role)) {
+        return res.status(403).json({ success: false, message: 'Forbidden: Insufficient permissions' });
       }
 
-      next(); // ✅ token valid and roles allowed
+      next(); // ✅ all good
     } catch (err) {
       console.error('Auth middleware error:', err.message);
-      return res.status(401).json({ message: 'Unauthorized: Token is invalid or expired' });
+
+      if (err.name === 'TokenExpiredError') {
+        return res.status(401).json({ success: false, message: 'Unauthorized: Token expired' });
+      }
+
+      return res.status(401).json({ success: false, message: 'Unauthorized: Invalid token' });
     }
   };
 };

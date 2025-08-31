@@ -9,8 +9,8 @@ exports.createTask = async (req, res) => {
       status: req.body.status || 'todo',
       priority: req.body.priority || 'medium',
       dueDate: req.body.dueDate,
-      assignedTo: req.body.assignedTo,
-      project: req.body.project || null, // <-- now optional
+      assignedTo: req.body.assignedTo || null,
+      project: req.body.project || null,
       createdBy: req.user.id,
     };
 
@@ -19,10 +19,11 @@ exports.createTask = async (req, res) => {
     }
 
     const task = await Task.create(payload);
+
     const populated = await Task.findById(task._id)
       .populate('assignedTo', 'name email')
       .populate('createdBy', 'name email')
-      .populate('project', 'name'); // optional project
+      .populate('project', 'name');
 
     res.status(201).json(populated);
   } catch (err) {
@@ -34,9 +35,10 @@ exports.createTask = async (req, res) => {
 // List tasks
 exports.getTasks = async (req, res) => {
   try {
-    const query = req.user.role === 'admin'
-      ? {}
-      : { $or: [{ createdBy: req.user.id }, { assignedTo: req.user.id }] };
+    const query =
+      req.user.role === 'admin'
+        ? {}
+        : { $or: [{ createdBy: req.user.id }, { assignedTo: req.user.id }] };
 
     const tasks = await Task.find(query)
       .populate('assignedTo', 'name email')
@@ -51,23 +53,25 @@ exports.getTasks = async (req, res) => {
   }
 };
 
-// Get one task
+// Get task by ID
 exports.getTaskById = async (req, res) => {
   try {
-    const t = await Task.findById(req.params.id)
+    const task = await Task.findById(req.params.id)
       .populate('assignedTo', 'name email')
       .populate('createdBy', 'name email')
       .populate('project', 'name');
 
-    if (!t) return res.status(404).json({ message: 'Task not found' });
+    if (!task) return res.status(404).json({ message: 'Task not found' });
 
-    if (req.user.role !== 'admin' &&
-        t.createdBy._id.toString() !== req.user.id &&
-        t.assignedTo?.toString() !== req.user.id) {
+    if (
+      req.user.role !== 'admin' &&
+      task.createdBy._id.toString() !== req.user.id &&
+      task.assignedTo?.toString() !== req.user.id
+    ) {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
-    res.json(t);
+    res.json(task);
   } catch (err) {
     console.error('❌ Error fetching task by ID:', err.message, err.stack);
     res.status(500).json({ message: 'Server error', error: err.message });
@@ -77,22 +81,21 @@ exports.getTaskById = async (req, res) => {
 // Update task
 exports.updateTask = async (req, res) => {
   try {
-    const t = await Task.findById(req.params.id);
-    if (!t) return res.status(404).json({ message: 'Task not found' });
+    const task = await Task.findById(req.params.id);
+    if (!task) return res.status(404).json({ message: 'Task not found' });
 
-    if (req.user.role !== 'admin' &&
-        t.createdBy.toString() !== req.user.id) {
+    if (req.user.role !== 'admin' && task.createdBy.toString() !== req.user.id) {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
-    const fields = ['title','description','status','priority','dueDate','assignedTo','project'];
-    fields.forEach(f => {
-      if (req.body[f] !== undefined) t[f] = req.body[f];
+    const fields = ['title', 'description', 'status', 'priority', 'dueDate', 'assignedTo', 'project'];
+    fields.forEach((f) => {
+      if (req.body[f] !== undefined) task[f] = req.body[f];
     });
 
-    await t.save();
+    await task.save();
 
-    const updated = await Task.findById(t._id)
+    const updated = await Task.findById(task._id)
       .populate('assignedTo', 'name email')
       .populate('createdBy', 'name email')
       .populate('project', 'name');
@@ -104,18 +107,17 @@ exports.updateTask = async (req, res) => {
   }
 };
 
-// Delete one task
+// Delete task
 exports.deleteTask = async (req, res) => {
   try {
-    const t = await Task.findById(req.params.id);
-    if (!t) return res.status(404).json({ message: 'Task not found' });
+    const task = await Task.findById(req.params.id);
+    if (!task) return res.status(404).json({ message: 'Task not found' });
 
-    if (req.user.role !== 'admin' &&
-        t.createdBy.toString() !== req.user.id) {
+    if (req.user.role !== 'admin' && task.createdBy.toString() !== req.user.id) {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
-    await t.deleteOne();
+    await task.deleteOne();
     res.json({ message: 'Task deleted' });
   } catch (err) {
     console.error('❌ Error deleting task:', err.message, err.stack);

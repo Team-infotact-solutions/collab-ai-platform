@@ -1,8 +1,9 @@
 const mongoose = require("mongoose");
 
+// Define schema for comments
 const commentSchema = new mongoose.Schema(
   {
-    taskId: {
+    task: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Task",
       required: true,
@@ -12,13 +13,15 @@ const commentSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    createdBy: {
+    user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
   },
-  { timestamps: true } 
+  {
+    timestamps: true, 
+  }
 );
 
-module.exports = mongoose.model("Comment", commentSchema);
+module.exports = mongoose.models.Comment || mongoose.model("Comment", commentSchema);
