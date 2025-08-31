@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../services/api'; 
+import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
 function TaskList({ onSelectTask, selectedTaskId }) {
-  const { user } = useAuth(); 
+  const { user } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [taskInput, setTaskInput] = useState('');
   const [search, setSearch] = useState('');
@@ -18,23 +18,23 @@ function TaskList({ onSelectTask, selectedTaskId }) {
 
   const fetchTasks = async () => {
     try {
-      const res = await api.get('/tasks');
-      setTasks(res.data);
+      const res = await api.getTasks();
+      setTasks(res.data || []);
     } catch (err) {
       console.error('Fetch tasks failed:', err.response?.data || err.message);
-      setErrorMsg(err.response?.data?.message || 'Failed to load tasks');
+      setErrorMsg(err.response?.data?.error || 'Failed to load tasks');
     }
   };
 
   const addTask = async () => {
     if (!taskInput.trim()) return;
     try {
-      await api.post('/tasks', { title: taskInput }); // project removed
+      await api.createTask({ title: taskInput });
       setTaskInput('');
       fetchTasks();
     } catch (err) {
       console.error('Add task failed:', err.response?.data || err.message);
-      setErrorMsg(err.response?.data?.message || 'Failed to add task');
+      setErrorMsg(err.response?.data?.error || 'Failed to add task');
     }
   };
 
@@ -44,21 +44,11 @@ function TaskList({ onSelectTask, selectedTaskId }) {
       return;
     }
     try {
-      await api.delete(`/tasks/${id}`);
+      await api.deleteTask(id);
       setTasks(tasks.filter((t) => t._id !== id));
     } catch (err) {
       console.error('Delete failed:', err.response?.data || err.message);
-      setErrorMsg(err.response?.data?.message || 'Failed to delete task');
-    }
-  };
-
-  const clearAll = async () => {
-    try {
-      await api.delete('/tasks');
-      setTasks([]);
-    } catch (err) {
-      console.error('Clear all failed:', err.response?.data || err.message);
-      setErrorMsg(err.response?.data?.message || 'Failed to clear tasks');
+      setErrorMsg(err.response?.data?.error || 'Failed to delete task');
     }
   };
 
@@ -70,35 +60,43 @@ function TaskList({ onSelectTask, selectedTaskId }) {
   const saveEdit = async (id) => {
     if (!editingTitle.trim()) return;
     try {
-      await api.put(`/tasks/${id}`, { title: editingTitle }); // project not needed
+      await api.updateTask(id, { title: editingTitle });
       setEditingTaskId(null);
       setEditingTitle('');
       fetchTasks();
     } catch (err) {
       console.error('Edit failed:', err.response?.data || err.message);
-      setErrorMsg(err.response?.data?.message || 'Failed to update task');
+      setErrorMsg(err.response?.data?.error || 'Failed to update task');
     }
   };
 
   const toggleStatus = async (task) => {
     const nextStatus =
-      task.status === 'todo' ? 'in-progress' : task.status === 'in-progress' ? 'done' : 'todo';
+      task.status === 'todo'
+        ? 'in-progress'
+        : task.status === 'in-progress'
+        ? 'done'
+        : 'todo';
     try {
-      await api.put(`/tasks/${task._id}`, { status: nextStatus });
+      await api.updateTask(task._id, { status: nextStatus });
       fetchTasks();
     } catch (err) {
       console.error('Status update failed:', err.response?.data || err.message);
-      setErrorMsg(err.response?.data?.message || 'Failed to update status');
+      setErrorMsg(err.response?.data?.error || 'Failed to update status');
     }
   };
 
   const filteredTasks = tasks
     .filter((task) => task.title.toLowerCase().includes(search.toLowerCase()))
-    .sort((a, b) => (sortAsc ? a.title.localeCompare(b.title) : b.title.localeCompare(a.title)));
+    .sort((a, b) =>
+      sortAsc ? a.title.localeCompare(b.title) : b.title.localeCompare(a.title)
+    );
 
   return (
     <div className="max-w-lg mx-auto p-6 bg-white shadow-md rounded-xl my-6">
-      <h2 className="text-2xl font-bold text-center text-gray-800 mb-4">📋 Task Manager</h2>
+      <h2 className="text-2xl font-bold text-center text-gray-800 mb-4">
+        📋 Task Manager
+      </h2>
 
       {errorMsg && (
         <div className="mb-3 p-2 bg-red-100 text-red-700 rounded">{errorMsg}</div>
@@ -172,12 +170,15 @@ function TaskList({ onSelectTask, selectedTaskId }) {
                   </button>
                 </div>
               ) : (
-                <span className="text-gray-800 font-medium">{task.title}</span>
+                <>
+                  <span className="text-gray-800 font-medium">{task.title}</span>
+                  <div className="text-sm text-gray-500 mt-1">
+                    Status: <span className="capitalize">{task.status}</span> | Priority: {task.priority || 'N/A'}{' '}
+                    | Created by: {task.createdBy?.name || 'Unknown'} | Assigned to: {task.assignedTo?.name || 'Unassigned'}
+                    {task.dueDate && ` | Due: ${new Date(task.dueDate).toLocaleDateString()}`}
+                  </div>
+                </>
               )}
-              <div className="text-sm text-gray-500 mt-1">
-                Status: <span className="capitalize">{task.status}</span> | Priority: {task.priority || 'N/A'}{' '}
-                {task.dueDate && `| Due: ${new Date(task.dueDate).toLocaleDateString()}`}
-              </div>
             </div>
 
             <div className="flex gap-2 ml-2">
@@ -210,7 +211,7 @@ function TaskList({ onSelectTask, selectedTaskId }) {
 
       {tasks.length > 0 && (
         <button
-          onClick={clearAll}
+          onClick={() => setTasks([])}
           className="mt-4 w-full py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition-colors"
         >
           Clear All

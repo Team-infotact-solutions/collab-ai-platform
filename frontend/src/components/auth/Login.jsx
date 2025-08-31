@@ -1,3 +1,4 @@
+// src/pages/auth/Login.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -15,16 +16,15 @@ function Login() {
     e.preventDefault();
     setError('');
 
+    // Basic validation
     if (!email || !password) {
       setError('Email and password are required');
       return;
     }
-
     if (!email.includes('@')) {
       setError('Invalid email address');
       return;
     }
-
     if (password.length < 6) {
       setError('Password must be at least 6 characters');
       return;
@@ -32,11 +32,11 @@ function Login() {
 
     try {
       setLoading(true);
-      await login(email, password); // call AuthContext login
-      navigate('/tasks'); // redirect on success
+      await login(email, password); 
+      navigate('/tasks'); 
     } catch (err) {
       console.error('Login failed:', err.message);
-      setError(err.message);
+      setError(err.message || 'Login failed');
     } finally {
       setLoading(false);
     }

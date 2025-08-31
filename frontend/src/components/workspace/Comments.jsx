@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
-import api from "../../services/api"; // Using centralized Axios instance
+import api from "../../services/api";
+import { useAuth } from "../../context/AuthContext";
 
-export default function Comments({ taskId, token, user }) {
+export default function Comments({ taskId }) {
+  const { user } = useAuth();
   const [comments, setComments] = useState([]);
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
@@ -9,19 +11,18 @@ export default function Comments({ taskId, token, user }) {
 
   useEffect(() => {
     if (taskId) fetchComments();
+    else setComments([]);
   }, [taskId]);
 
   const fetchComments = async () => {
     setLoading(true);
     setErrorMsg("");
     try {
-      const res = await api.get(`/comments/${taskId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api.getComments(taskId);
       setComments(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error("❌ Fetch comments failed:", err);
-      setErrorMsg("Failed to load comments");
+      setErrorMsg(err.response?.data?.message || "Failed to load comments");
       setComments([]);
     } finally {
       setLoading(false);
@@ -32,16 +33,26 @@ export default function Comments({ taskId, token, user }) {
     if (!text.trim()) return;
     setErrorMsg("");
     try {
-      await api.post(
-        `/comments/${taskId}`,
-        { text },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await api.createComment(taskId, { text });
       setText("");
-      fetchComments();
+      await fetchComments();
     } catch (err) {
       console.error("❌ Add comment failed:", err);
-      setErrorMsg("Failed to add comment");
+      setErrorMsg(err.response?.data?.message || "Failed to add comment");
+    }
+  };
+
+  const deleteComment = async (commentId, commentOwnerId) => {
+    if (!(user.role === "admin" || user._id === commentOwnerId)) {
+      setErrorMsg("You are not authorized to delete this comment");
+      return;
+    }
+    try {
+      await api.deleteComment(commentId);
+      await fetchComments();
+    } catch (err) {
+      console.error("❌ Delete comment failed:", err);
+      setErrorMsg(err.response?.data?.message || "Failed to delete comment");
     }
   };
 
@@ -56,7 +67,7 @@ export default function Comments({ taskId, token, user }) {
       {loading ? (
         <p className="text-gray-500 italic">Loading comments...</p>
       ) : (
-        <ul className="space-y-3 max-h-60 overflow-y-auto pr-2">
+        <ul className="space-y-2 max-h-60 overflow-y-auto pr-2">
           {comments.length === 0 ? (
             <p className="text-gray-400 text-sm italic">No comments yet. Be the first!</p>
           ) : (
@@ -69,22 +80,10 @@ export default function Comments({ taskId, token, user }) {
                 <div className="text-xs text-gray-500 mt-1 flex justify-between items-center">
                   <span>{c.createdBy?.name || "User"}</span>
                   <span>{new Date(c.createdAt).toLocaleString()}</span>
-
-                  {/* Optional delete button for admin/owner */}
-                  {user && (user.role === "admin" || user._id === c.createdBy?._id) && (
+                  {(user.role === "admin" || user._id === c.createdBy?._id) && (
                     <button
                       className="ml-2 px-2 py-1 text-xs text-red-600 hover:underline"
-                      onClick={async () => {
-                        try {
-                          await api.delete(`/comments/${c._id}`, {
-                            headers: { Authorization: `Bearer ${token}` },
-                          });
-                          fetchComments();
-                        } catch (err) {
-                          console.error("❌ Delete comment failed:", err);
-                          setErrorMsg("Failed to delete comment");
-                        }
-                      }}
+                      onClick={() => deleteComment(c._id, c.createdBy?._id)}
                     >
                       Delete
                     </button>

@@ -1,3 +1,4 @@
+// src/pages/auth/Signup.jsx
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -29,8 +30,10 @@ function Signup() {
 
     try {
       setLoading(true);
-      // TODO: Replace with real API call
-      await signup(email, 'user'); // Example role: 'user'
+      // Pass name, email, password to signup
+      await signup(username, email, password);
+      alert('Signup successful! You can now login.');
+      // Optional: redirect to login page
     } catch (err) {
       setError(err.message || 'Signup failed');
     } finally {

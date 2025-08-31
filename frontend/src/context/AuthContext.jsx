@@ -1,5 +1,6 @@
+// src/context/AuthContext.jsx
 import React, { createContext, useContext, useState } from 'react';
-import api from '../services/api'; // axios instance
+import api from '../services/api';
 
 const AuthContext = createContext();
 
@@ -9,36 +10,55 @@ export const AuthProvider = ({ children }) => {
       const savedUser = localStorage.getItem('user');
       return savedUser ? JSON.parse(savedUser) : null;
     } catch {
-      return null; // safe fallback if JSON is invalid
+      return null;
     }
   });
 
+  // ✅ LOGIN
   const login = async (email, password) => {
     try {
-      const res = await api.post('/auth/login', { email, password });
-
+      const res = await api.login({ email, password });
       const token = res.data?.token;
       const userData = res.data?.user;
 
-      if (!token || !userData) {
-        console.error('Login response invalid:', res.data);
-        throw new Error('Invalid response from server');
-      }
+      if (!token || !userData) throw new Error('Invalid response from server');
 
-      // Save token & user info
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(userData));
       localStorage.setItem('userId', userData._id);
       localStorage.setItem('role', userData.role);
 
       setUser(userData);
-      return userData; // optional
+      return userData;
     } catch (err) {
       console.error('Login error:', err.response?.data || err.message);
       throw new Error(err.response?.data?.message || 'Login failed');
     }
   };
 
+  // ✅ SIGNUP
+  const signup = async (name, email, password) => {
+    try {
+      const res = await api.signup({ name, email, password });
+      const userData = res.data?.user;
+      const token = res.data?.token;
+
+      if (!userData) throw new Error('Signup failed');
+
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem('userId', userData._id);
+      localStorage.setItem('role', userData.role);
+
+      setUser(userData);
+      return userData;
+    } catch (err) {
+      console.error('Signup error:', err.response?.data || err.message);
+      throw new Error(err.response?.data?.message || 'Signup failed');
+    }
+  };
+
+  // ✅ LOGOUT
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -48,7 +68,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, signup, logout }}>
       {children}
     </AuthContext.Provider>
   );
