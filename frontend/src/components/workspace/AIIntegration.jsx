@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import api from '../../services/api'; // axios instance with baseURL & token
+import api from '../../services/api'; 
 
 function AIIntegration() {
   const [input, setInput] = useState('');
@@ -15,7 +15,9 @@ function AIIntegration() {
     setIdeas([]);
 
     try {
-      const res = await api.post('/ideas', { topic: input });
+      // use my wrapper function
+      const res = await api.generateIdea(input);
+
       if (res.data?.ideas?.length) {
         setIdeas(res.data.ideas);
       } else {
@@ -23,7 +25,10 @@ function AIIntegration() {
       }
       setInput('');
     } catch (err) {
-      console.error('AI Idea generation failed:', err.response?.data || err.message);
+      console.error(
+        'AI Idea generation failed:',
+        err.response?.data || err.message
+      );
       setErrorMsg(err.response?.data?.message || 'Failed to generate idea');
     } finally {
       setLoading(false);
