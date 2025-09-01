@@ -2,7 +2,7 @@
 
 🚀 A full-stack platform designed for teams to **brainstorm, plan, and manage projects collaboratively** with the support of **real-time interaction** and **AI-powered assistance**.  
 
-This project was developed during an internship at **Infotact Solutions** by a team working on both **backend (Node.js + Express)** and **frontend (React.js)**.  
+This project was developed during an internship at **Infotact Solutions** by our team working on both **backend (Node.js + Express)** and **frontend (React.js)**.  
 
 ---
 
