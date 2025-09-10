@@ -5,8 +5,7 @@ const Task = require("../models/Task");
 const Comment = require("../models/Comment");
 
 const router = express.Router();
-
-// ----- USERS -----
+-
 router.get("/users", auth(["admin"]), async (req, res) => {
   try {
     const users = await User.find().select("-password");
@@ -30,13 +29,12 @@ router.patch("/users/:id", auth(["admin"]), async (req, res) => {
   }
 });
 
-// ----- TASKS -----
 router.get("/tasks", auth(["admin"]), async (req, res) => {
   try {
     const tasks = await Task.find()
-      .populate("createdBy", "name email")   // creator info
-      .populate("assignedTo", "name email")  // assigned user info
-      .populate("project", "title");         // optional: project title
+      .populate("createdBy", "name email")   
+      .populate("assignedTo", "name email")  
+      .populate("project", "title");         
     res.json(tasks);
   } catch (err) {
     console.error("Error fetching tasks:", err);
@@ -53,7 +51,6 @@ router.delete("/tasks/:id", auth(["admin"]), async (req, res) => {
   }
 });
 
-// ----- COMMENTS -----
 router.get("/comments", auth(["admin"]), async (req, res) => {
   try {
     const comments = await Comment.find()

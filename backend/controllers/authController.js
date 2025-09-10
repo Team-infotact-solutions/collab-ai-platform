@@ -2,7 +2,6 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-// Register new user
 exports.register = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
@@ -33,7 +32,6 @@ exports.register = async (req, res) => {
       { expiresIn: '1d' }
     );
 
-    // ✅ Return user object along with token
     res.status(201).json({
       message: 'User registered successfully',
       user: {
@@ -48,9 +46,8 @@ exports.register = async (req, res) => {
     console.error('Register Error:', err.message);
     res.status(500).json({ message: 'Server error' });
   }
-};
+}
 
-// Login existing user
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -75,7 +72,6 @@ exports.login = async (req, res) => {
       { expiresIn: '1d' }
     );
 
-    // ✅ Return user object along with token
     res.json({
       message: 'Login successful',
       user: {

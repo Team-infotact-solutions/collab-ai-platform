@@ -19,7 +19,7 @@ const versionSchema = new mongoose.Schema(
     },
   },
   {
-    timestamps: true, // adds createdAt & updatedAt
+    timestamps: true,
   }
 );
 

@@ -1,6 +1,5 @@
 const Task = require('../models/Task');
 
-// Create a new task
 exports.createTask = async (req, res) => {
   try {
     const payload = {
@@ -27,12 +26,11 @@ exports.createTask = async (req, res) => {
 
     res.status(201).json(populated);
   } catch (err) {
-    console.error('❌ Error creating task:', err.message, err.stack);
+    console.error('Error creating task:', err.message, err.stack);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
 
-// List tasks
 exports.getTasks = async (req, res) => {
   try {
     const query =
@@ -48,12 +46,11 @@ exports.getTasks = async (req, res) => {
 
     res.json(tasks);
   } catch (err) {
-    console.error('❌ Error fetching tasks:', err.message, err.stack);
+    console.error('Error fetching tasks:', err.message, err.stack);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
 
-// Get task by ID
 exports.getTaskById = async (req, res) => {
   try {
     const task = await Task.findById(req.params.id)
@@ -73,12 +70,11 @@ exports.getTaskById = async (req, res) => {
 
     res.json(task);
   } catch (err) {
-    console.error('❌ Error fetching task by ID:', err.message, err.stack);
+    console.error('Error fetching task by ID:', err.message, err.stack);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
 
-// Update task
 exports.updateTask = async (req, res) => {
   try {
     const task = await Task.findById(req.params.id);
@@ -102,12 +98,11 @@ exports.updateTask = async (req, res) => {
 
     res.json(updated);
   } catch (err) {
-    console.error('❌ Error updating task:', err.message, err.stack);
+    console.error('Error updating task:', err.message, err.stack);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
 
-// Delete task
 exports.deleteTask = async (req, res) => {
   try {
     const task = await Task.findById(req.params.id);
@@ -120,12 +115,11 @@ exports.deleteTask = async (req, res) => {
     await task.deleteOne();
     res.json({ message: 'Task deleted' });
   } catch (err) {
-    console.error('❌ Error deleting task:', err.message, err.stack);
+    console.error('Error deleting task:', err.message, err.stack);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
 
-// Clear all tasks
 exports.clearAllTasks = async (req, res) => {
   try {
     if (req.user.role === 'admin') {
@@ -135,7 +129,7 @@ exports.clearAllTasks = async (req, res) => {
     }
     res.json({ message: 'All tasks cleared' });
   } catch (err) {
-    console.error('❌ Error clearing tasks:', err.message, err.stack);
+    console.error('Error clearing tasks:', err.message, err.stack);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };

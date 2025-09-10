@@ -3,7 +3,6 @@ const router = express.Router();
 const Comment = require("../models/Comment");
 const auth = require("../middleware/auth");
 
-// ================= GET COMMENTS FOR A TASK =================
 router.get("/task/:taskId", auth(), async (req, res) => {
   try {
     const { taskId } = req.params;
@@ -23,7 +22,6 @@ router.get("/task/:taskId", auth(), async (req, res) => {
   }
 });
 
-// ================= CREATE COMMENT =================
 router.post("/task/:taskId", auth(), async (req, res) => {
   try {
     const { taskId } = req.params;
@@ -53,7 +51,6 @@ router.post("/task/:taskId", auth(), async (req, res) => {
   }
 });
 
-// ================= DELETE COMMENT =================
 router.delete("/:commentId", auth(), async (req, res) => {
   try {
     const { commentId } = req.params;
@@ -68,7 +65,6 @@ router.delete("/:commentId", auth(), async (req, res) => {
       return res.status(404).json({ message: "Comment not found" });
     }
 
-    // Only admin or comment owner can delete
     if (req.user.role !== "admin" && comment.user.toString() !== req.user.id) {
       return res.status(403).json({ message: "Not authorized to delete this comment" });
     }
