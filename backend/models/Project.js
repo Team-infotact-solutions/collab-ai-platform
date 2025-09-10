@@ -4,7 +4,6 @@ const projectSchema = new mongoose.Schema({
   name:        { type: String, required: true, trim: true },
   description: { type: String, default: '' },
 
-  // Project members with roles
   members: [
     {
       user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
@@ -12,7 +11,6 @@ const projectSchema = new mongoose.Schema({
     }
   ],
 
-  // Tasks under this project
   tasks: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Task' }],
 
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }

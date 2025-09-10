@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 
-// Define schema for comments
 const commentSchema = new mongoose.Schema(
   {
     task: {
